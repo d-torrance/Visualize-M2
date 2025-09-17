@@ -18,21 +18,21 @@
 
 newPackage(
 	"Visualize",
-    	Version => "1.0", 
-    	Date => "August 31, 2017",
+	Version => "1.8",
+	Date => "September 17, 2025",
     	Authors => {       
      	     {Name => "Brett Barwick", Email => "bbarwick@uscupstate.edu", HomePage => "http://faculty.uscupstate.edu/bbarwick/"},	     
 	     {Name => "Thomas Enkosky", Email => "tomenk@bu.edu", HomePage => "http://math.bu.edu/people/tomenk/"},	     
 	     {Name => "Branden Stone", Email => "bstone@adelphi.edu", HomePage => "http://math.adelpi.edu/~bstone/"},
-	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
+	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"},
+	     {Name => "Doug Torrance", Email => "dtorrance@piedmont.edu", HomePage => "https://webwork.piedmont.edu/~dtorrance"}
 -- Contributing Author	     {Name => "Ata Firat Pir", Email => "atafirat@math.tamu.edu"},	     
 -- Contributing Author	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 -- Contributing Author	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
 -- Contributing Author	     {Name => "Julio Urenda", Email => "jcurenda@nmsu.edu"},	     
 	     },
-    	Headline => "Interactive visualization and manipulation of combinatorial objects in a browser",
+    	Headline => "interactive visualization and manipulation of combinatorial objects in a browser",
 	Keywords => {"Graphics"},
-    	DebuggingMode => true,
 	PackageExports => {"Graphs", "Posets", "SimplicialComplexes"},
 	AuxiliaryFiles => true,
 	Configuration => {"DefaultPath" => null } 
@@ -62,6 +62,20 @@ export {
      "closePort"
 }
 
+---------------
+-- ChangeLog --
+---------------
+
+-*
+
+1.8 (2025-09-17, M2 1.25.11)
+* bump bootstrap 3 -> bootstrap 5
+* bundle clipboard & bootstrap using webpack
+
+1.7 (2025-05-03, M2 1.25.05)
+* update for leadTerm changes
+
+*-
 
 ------------------------------------------------------------
 -- Global Variables
@@ -241,7 +255,7 @@ visualize(Ideal) := commonVisOpts|{VisTemplate => basePath |"Visualize/templates
 	
 	-- changed gens to leadTerm so if there's a non monomial ideal
 	-- it will return the initial ideal
-	arrayList = apply( flatten entries leadTerm J, m -> flatten exponents m);	
+	arrayList = apply((leadTerm J)_*, m -> flatten exponents m);
 	arrayList = toArray arrayList;
 	arrayString = toString arrayList;
 	
@@ -264,7 +278,7 @@ visualize(Ideal) := commonVisOpts|{VisTemplate => basePath |"Visualize/templates
 	    
     	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
     	arrayList = toArray arrayList;
-	newArrayList = apply(flatten entries leadTerm J, m -> flatten exponents m );
+	newArrayList = apply((leadTerm J)_*, m -> flatten exponents m );
     	newArrayList = toArray newArrayList;
     	arrayString = toString arrayList;
      	newArrayString = toString newArrayList;
@@ -440,9 +454,9 @@ visualize(SimplicialComplex) := commonVisOpts|{VisTemplate => basePath | "Visual
 
     openPortTest();
         
-    vertexSet = flatten entries faces(0,D);
-    edgeSet = flatten entries faces(1,D);
-    face2Set = flatten entries faces(2,D);
+    vertexSet = faces(0,D);
+    edgeSet = faces(1,D);
+    face2Set = faces(2,D);
     vertexList = apply(vertexSet, v -> apply(new List from factor v, i -> i#0));
     edgeList = apply(edgeSet, e -> apply(new List from factor e, i -> i#0));
     face2List = apply(face2Set, f -> apply(new List from factor f, i -> i#0));
@@ -476,7 +490,7 @@ visualize(SimplicialComplex) := commonVisOpts|{VisTemplate => basePath | "Visual
         
     if dim D>2 then (
 	error "3-dimensional simplicial complexes not implemented yet.";
-	face3Set = flatten entries faces(3,D);
+	face3Set = faces(3,D);
 	face3List = apply(face3Set, f -> apply(new List from factor f, i -> i#0));
        	face3String = toString new Array from apply(#face3List, i -> {"\"v1\": "|toString(position(vertexSet, j -> j == face3List#i#3))|",\"v2\": "|toString(position(vertexSet, j -> j == face3List#i#2))|",\"v3\": "|toString(position(vertexSet, j -> j == face3List#i#1))|",\"v4\": "|toString(position(vertexSet, j -> j == face3List#i#0))});
 	searchReplace("vis3Faces",face3String, visTemp); -- Replace vis3Faces in the visSimplicialComplex html file by the list of faces. 
@@ -489,7 +503,7 @@ visualize(SimplicialComplex) := commonVisOpts|{VisTemplate => basePath | "Visual
     return browserOutput; 
 )
 
-{*
+-*
 --input: A parameterized surface in RR^3
 --output: The surface in the browser
 --
@@ -516,7 +530,7 @@ visualize(List) := {VisPath => defaultPath, VisTemplate => basePath | "Visualize
     
     return visTemp;
 )
-*}
+*-
 
 -- Input: A string of a path to a directory
 -- Output: Copies the needed files and libraries to path
@@ -529,7 +543,7 @@ copyJS(String) := opts -> dst -> (
     if not match("/$", dst) then dst = dst | "/";
     if not fileExists dst then makeDirectory dst;
 
-    dirs := {"js", "css", "fonts", "images"};
+    dirs := {"js", "css", "images"};
     existingDirs := select(dirs, dir -> fileExists concatenate(dst, dir));
 
     if #existingDirs > 0 and opts.Warning == true then (
@@ -695,6 +709,7 @@ server = () -> (
 	else if match("^POST /isConnected/(.*) ",r) then (
 	    -- testKey = "isConnected";
 	    fun = identity;
+	    print"isConnected else if in M2";
 	    u = toString( isConnected dataValue );
 	)	
 
@@ -1025,6 +1040,8 @@ return H;
 
 beginDocumentation()
 
+reldir = replace("PKG","Visualize",Layout#2#"package")	    -- this works just for installation in layouts of type 2, too bad.
+
 document {
      Key => Visualize,
      Headline => "A package to help visualize algebraic objects in the browser using javascript",
@@ -1039,14 +1056,12 @@ document {
      
      UL {
 	 {HREF("https://github.com/AndreaLombardo/BootSideMenu","BootSideMenu.js")},
-	 {HREF("https://github.com/dataarts/webgl-globe/blob/master/globe-vertex-texture/third-party/Three/Detector.js","Detectors.js")},
 	 {HREF("http://getbootstrap.com/","Bootstrap.js")},
 	 {HREF("https://clipboardjs.com/","clipboard.js")},
 	 {HREF("https://d3js.org/","D3.js")},
 	 {HREF("https://jquery.com/","jQuery")},
 	 {HREF("http://refreshless.com/nouislider/","noUiSlider.js")},
-	 {HREF("https://github.com/mrdoob/three.js/","Three.js")},
-	 {HREF("http://underscorejs.org/","Underscore.js")}
+	 {HREF("https://github.com/mrdoob/three.js/","Three.js")}
 	},
          
      
@@ -1071,12 +1086,12 @@ document {
      some features may require you to open the links in a new tab.",
      
      UL {
-	 {HREF(replace("PKG","Visualize",Layout#1#"package")|"graph-example.html","Visualize Graphs example")},
-	 {HREF(replace("PKG","Visualize",Layout#1#"package")|"digraph-example.html","Visualize Digraphs example")},	 
-	 {HREF(replace("PKG","Visualize",Layout#1#"package")|"poset-example.html","Visualize Posets example")},	  
-	 {HREF(replace("PKG","Visualize",Layout#1#"package")|"simplicial-complex-example.html","Visualize Simplicial Complexes example")},	 
-	 {HREF(replace("PKG","Visualize",Layout#1#"package")|"ideal2d-example.html","Visualize Ideals in 2 variables example")},	 
-	 {HREF(replace("PKG","Visualize",Layout#1#"package")|"ideal3d-example.html","Visualize Ideals in 3 variables example")}
+	 {HREF(reldir|"graph-example.html","Visualize Graphs example")},
+	 {HREF(reldir|"digraph-example.html","Visualize Digraphs example")},	 
+	 {HREF(reldir|"poset-example.html","Visualize Posets example")},	  
+	 {HREF(reldir|"simplicial-complex-example.html","Visualize Simplicial Complexes example")},	 
+	 {HREF(reldir|"ideal2d-example.html","Visualize Ideals in 2 variables example")},	 
+	 {HREF(reldir|"ideal3d-example.html","Visualize Ideals in 3 variables example")}
         },
 
      SUBSECTION "Methods and Workflow",
@@ -1125,7 +1140,7 @@ document {
 
     }        
 
-{*
+-*
 document {
     Key => "Visualizing Graphs",	 
     
@@ -1195,7 +1210,7 @@ document {
 	}
     
     }
-*}
+*-
 
 document {
      Key => visualize,
@@ -1250,10 +1265,10 @@ document {
      PARA {"At this point we wish to visualize ", TT "G", ". To do this simply execute ", TT "H = visualize G", " and 
      browser will open with interactive image. You can view this image in the link below."},
      
-     PARA {HREF(replace("PKG","Visualize",Layout#1#"package")|"graph-example.html","Visualize Graphs example")},
+     PARA {HREF(reldir|"graph-example.html","Visualize Graphs example")},
      
      -- make sure this image matches the graph in the example. 
---     PARA IMG ("src" => replace("PKG","Visualize",Layout#1#"package")|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
+--     PARA IMG ("src" => reldir|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
      
      
      PARA {"Once finished with a session, you can keep visualizing. For example if you were to say ", TT "H = visualize G", ", once you 
@@ -1282,7 +1297,7 @@ document {
 	 {BOLD "Highlight Neighbors: ", "Allows you to see the neighbors of a vertex when selected.", BR{}, BR{}}, 
 	 
 	 {BOLD "Reset Nodes: ", "When you move a vertex, it will pin it to the canvas. If you have pinned a node to the canvas, you can 
-	     undo this process by reseting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
+	     undo this process by resetting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
 	     
 	 {BOLD "Turn off force: ", "The force is what creates the charges on the nodes. Turning this off will make the vertices 
 	     not repel each other.", BR{}, BR{}}, 
@@ -1309,7 +1324,7 @@ document {
 	 },
 	
      
---     PARA IMG ("src" => replace("PKG","Visualize",Layout#1#"package")|"images/Visualize/Visualize_Graph2.png", "alt" => "Original graph entered into M2"), 
+--     PARA IMG ("src" => reldir|"images/Visualize/Visualize_Graph2.png", "alt" => "Original graph entered into M2"), 
 
     Caveat => {"When the graph is exported back to Macaulay2 after ending the visualization session, all vertices are represented as strings.  To recover the values of these labels (for example, if they have numeric values or represent ring variables), use the command ", TT "value first toString G", "."},
      
@@ -1343,7 +1358,7 @@ document {
      
      PARA {"In order to visualize this, simply type ", TT "visualize I", " and the following example will appear in the browser."},
      
-     PARA {HREF(replace("PKG","Visualize",Layout#1#"package")|"ideal2d-example.html","Visualize ideal in 2 variables example")},     
+     PARA {HREF(reldir|"ideal2d-example.html","Visualize ideal in 2 variables example")},     
      
      EXAMPLE {
 	 "R = QQ[x,y,z]",
@@ -1352,7 +1367,7 @@ document {
      
      PARA {"In order to visualize this, simply type ", TT "visualize J", " and the following example will appear in the browser."},  
      
-     PARA {HREF(replace("PKG","Visualize",Layout#1#"package")|"ideal3d-example.html","Visualize ideal in 3 variables example")},             
+     PARA {HREF(reldir|"ideal3d-example.html","Visualize ideal in 3 variables example")},             
      
      Caveat => {"Visualizing ideals is still in development so please be gentle with it."},     
      
@@ -1390,10 +1405,10 @@ document {
      PARA {"At this point we wish to visualize ", TT "D", ". To do this simply execute ", TT "H = visualize D", " and 
      browser will open with interactive image. You can view this image in the link below."},
      
-     PARA {HREF(replace("PKG","Visualize",Layout#1#"package")|"digraph-example.html","Visualize Digraphs example")},
+     PARA {HREF(reldir|"digraph-example.html","Visualize Digraphs example")},
      
      -- make sure this image matches the graph in the example. 
---     PARA IMG ("src" => replace("PKG","Visualize",Layout#1#"package")|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
+--     PARA IMG ("src" => reldir|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
      
      
      PARA {"Once finished with a session, you can keep visualizing. For example if you were to say ", TT "H = visualize D", ", once you 
@@ -1424,7 +1439,7 @@ document {
 	 {BOLD "Highlight Neighbors: ", "Allows you to see the neighbors of a vertex when selected.", BR{}, BR{}}, 
 	 
 	 {BOLD "Reset Nodes: ", "When you move a vertex, it will pin it to the canvas. If you have pinned a node to the canvas, you can 
-	     undo this process by reseting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
+	     undo this process by resetting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
 	     
 	 {BOLD "Turn off force: ", "The force is what creates the charges on the nodes. Turning this off will make the vertices 
 	     not repel each other.", BR{}, BR{}}, 
@@ -1488,10 +1503,10 @@ document {
      PARA {"At this point we wish to visualize ", TT "P", ". To do this simply execute ", TT "H = visualize P", " and 
      browser will open with interactive image. You can view this image in the link below."},
      
-     PARA {HREF(replace("PKG","Visualize",Layout#1#"package")|"poset-example.html","Visualize Posets example")},
+     PARA {HREF(reldir|"poset-example.html","Visualize Posets example")},
      
      -- make sure this image matches the graph in the example. 
---     PARA IMG ("src" => replace("PKG","Visualize",Layout#1#"package")|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
+--     PARA IMG ("src" => reldir|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
      
      
      PARA {"Once finished with a session, you can keep visualizing. For example if you were to say ", TT "H = visualize P", ", once you 
@@ -1527,7 +1542,7 @@ document {
 	 {BOLD "Fix extremal nodes: ", "Forces extremal nodes to be placed at the top and bottom of the image.", BR{}, BR{}}, 	 
 	 
 	 {BOLD "Reset Nodes: ", "When you move a vertex, it will pin it to the canvas. If you have pinned a node to the canvas, you can 
-	     undo this process by reseting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
+	     undo this process by resetting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
 	     
 	 {BOLD "Turn off force: ", "The force is what creates the charges on the nodes. Turning this off will make the vertices 
 	     not repel each other.", BR{}, BR{}}, 
@@ -1590,10 +1605,10 @@ document {
      PARA {"At this point we wish to visualize ", TT "D", ". To do this simply execute ", TT "H = visualize D", " and 
      browser will open with interactive image. You can view this image in the link below."},
      
-     PARA {HREF(replace("PKG","Visualize",Layout#1#"package")|"simplicial-complex-example.html","Visualize Simplicial Complex example")},
+     PARA {HREF(reldir|"simplicial-complex-example.html","Visualize Simplicial Complex example")},
      
      -- make sure this image matches the graph in the example. 
---     PARA IMG ("src" => replace("PKG","Visualize",Layout#1#"package")|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
+--     PARA IMG ("src" => reldir|"images/Visualize/Visualize_Graph1.png", "alt" => "Original graph entered into M2"), 
      
      
      PARA {"Once finished with a session, you can keep visualizing. For example if you were to say ", TT "H = visualize D", ", once you 
@@ -1624,7 +1639,7 @@ document {
 	 {BOLD "Highlight faces: ", "Allows you to see the connecting faces when a vertex is selected.", BR{}, BR{}}, 
 	 
 	 {BOLD "Reset Nodes: ", "When you move a vertex, it will pin it to the canvas. If you have pinned a node to the canvas, you can 
-	     undo this process by reseting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
+	     undo this process by resetting the nodes. Clicking this will reset all nodes.", BR{}, BR{}}, 
 	     
 	 {BOLD "Turn off force: ", "The force is what creates the charges on the nodes. Turning this off will make the vertices 
 	     not repel each other.", BR{}, BR{}}, 
